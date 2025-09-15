@@ -4,9 +4,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Examen Simulado - 40min</title>
+<title>Examen Simulado - 60min</title>
 <style>
-:root{}
 body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial;background:#f4f6f9;color:#222}
 .header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;padding:12px 16px;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,0.06)}
 .title{font-size:18px;font-weight:700}
@@ -21,8 +20,6 @@ body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neu
 .respuesta-correcta{margin-top:8px;font-size:14px}
 .timer{font-weight:700;color:#d9534f;font-size:16px}
 .footer-note{text-align:center;color:#666;font-size:13px;padding:14px 0}
-
-/* responsive */
 @media (max-width:600px){ .title{font-size:16px} .controls button{margin:6px 4px;padding:8px} .pregunta h3{font-size:15px} }
 </style>
 </head>
@@ -30,7 +27,7 @@ body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neu
 <div class="header">
   <div class="title">Examen Simulado - Desarrollo Seguro</div>
   <div style="display:flex;align-items:center;gap:10px">
-    <div class="timer" id="timer">Tiempo restante: 40:00</div>
+    <div class="timer" id="timer">Tiempo restante: 60:00</div>
     <div class="controls">
       <button onclick="calificar()">Enviar</button>
       <button onclick="reiniciar()">Reiniciar</button>
@@ -47,7 +44,7 @@ body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neu
     <h4>Historial</h4>
     <ul id="listaHistorial"></ul>
   </section>
-  <div class="footer-note">Preguntas: 455 · Tiempo: 40 minutos · Responsive para móvil</div>
+  <div class="footer-note">Preguntas: 455 · Tiempo: 60 minutos · Responsive</div>
 </main>
 
 <script>
@@ -95,8 +92,8 @@ QUESTIONS.forEach((q, idx) => {
 
 function escapeHtml(s) { if(!s) return ''; return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('\n','<br>'); }
 
-// timer logic
-let tiempoRestante = 40*60;
+// timer logic 60min
+let tiempoRestante = 60*60;
 const timerDiv = document.getElementById('timer');
 let timerInterval = setInterval(actualizarTimer, 1000);
 function actualizarTimer() {
@@ -127,7 +124,6 @@ function calificar() {
     const tipo = wrapper.getAttribute('data-tipo');
     const selected = Array.from(wrapper.querySelectorAll('input:checked')).map(i=>i.value);
     const correctIdxs = q.options.map((o,i)=> o.correct ? String(i) : null).filter(x=>x!==null);
-    // clear classes
     wrapper.querySelectorAll('.opcion').forEach(o=>o.classList.remove('op-checked','correct','wrong'));
 
     let esCorrecta = false;
@@ -135,7 +131,6 @@ function calificar() {
     else esCorrecta = (selected.length===correctIdxs.length && correctIdxs.every(ci=>selected.includes(ci)));
     if (esCorrecta) puntos++;
 
-    // mark options
     q.options.forEach((opt, oi)=>{
       const idxStr = String(oi);
       const input = wrapper.querySelector(`input[value='${idxStr}']`);
@@ -145,13 +140,14 @@ function calificar() {
     });
 
     const resp = wrapper.querySelector('.respuesta-correcta');
-    if (esCorrecta) resp.innerHTML = `<span style="color:var(--success)">✔ Correcto</span>`;
-    else { const correctTxt = q.options.map((o,i)=> o.correct ? o.text : null).filter(x=>x!==null).join(' || '); resp.innerHTML = `<span style="color:var(--danger)">✘ Incorrecto.</span> Respuesta(s) correcta(s): <span style="color:var(--success)">${escapeHtml(correctTxt)}</span>`; }
+    if (esCorrecta) resp.innerHTML = `<span style="color:green">✔ Correcto</span>`;
+    else { const correctTxt = q.options.map((o,i)=> o.correct ? o.text : null).filter(x=>x!==null).join(' || '); resp.innerHTML = `<span style="color:red">✘ Incorrecto.</span> Respuesta(s) correcta(s): <span style="color:green">${escapeHtml(correctTxt)}</span>`; }
   });
 
   intentos++;
   const nota = ((puntos/total)*20).toFixed(1);
   document.getElementById('resultado').innerText = `Intento #${intentos}: ${puntos} / ${total} correctas. Nota: ${nota} / 20`;
+  alert(`📊 Resultado del intento #${intentos}\n\nCorrectas: ${puntos} / ${total}\nNota: ${nota}/20`);
   const nuevo = {'intento':intentos, 'correctas':puntos, 'total':total, 'nota':nota, 'fecha': (new Date()).toISOString() };
   const historial = JSON.parse(localStorage.getItem('historialExamen') || '[]');
   historial.push(nuevo);
@@ -171,8 +167,6 @@ function reiniciar() { document.getElementById('examen').reset(); document.getEl
 function limpiarHistorial() { localStorage.removeItem('historialExamen'); document.getElementById('listaHistorial').innerHTML=''; intentos=0; document.getElementById('resultado').innerText='Historial borrado.'; }
 
 function exportarHistorial() { const historial = JSON.parse(localStorage.getItem('historialExamen') || '[]'); if(!historial.length) { alert('No hay historial para guardar.'); return; } let csv = 'Intento,Correctas,Total,Nota,Fecha\n'; historial.forEach(it=> csv += `${it.intento},${it.correctas},${it.total},${it.nota},${it.fecha}\n`); const blob = new Blob([csv], {type:'text/csv'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'historial_notas.csv'; a.click(); }
-
-function escapeHtml(s) { return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 </script>
 </body>
 </html>
